@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EEF4FE">
+<title>על מה נדבר עכשיו? · Building AI Agents for Production</title>
+<style>
+:root{--purple:#8039DF;--deep:#3E0075;--lav:#EEF4FE;--mint:#4CFEC8;--muted:#6B6680;--hot:#FF2370}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:var(--lav);color:var(--deep);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,"Arial Hebrew",sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:560px;margin:0 auto;padding:22px 16px 40px}
+.logo{display:block;width:100%;max-width:440px;margin:0 auto 20px}
+.eyebrow{display:inline-block;background:var(--mint);color:var(--deep);font-size:12px;font-weight:700;letter-spacing:.16em;
+  padding:5px 12px;border-radius:20px;direction:ltr}
+h1{font-size:28px;line-height:1.15;margin:12px 0 4px}
+.sub{margin:0;color:var(--muted);font-size:16px}
+.timer{margin-top:18px;background:#fff;border-radius:16px;padding:12px 16px 14px;box-shadow:0 4px 14px rgba(62,0,117,.08)}
+.timer .tt{display:block;text-align:center;font-size:17px;font-weight:700;margin-bottom:9px}
+.timer .tt b{font-size:23px}
+.timer .tb{display:block;height:8px;border-radius:4px;background:#EEE8F8;overflow:hidden}
+.timer .tb i{display:block;height:100%;width:100%;background:var(--purple);border-radius:4px;transition:width .25s linear,background .3s}
+.timer.urgent .tt{color:#D3105A}
+.timer.urgent .tb i{background:var(--hot)}
+.opts{display:grid;gap:12px;margin-top:16px}
+.opt{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:68px;padding:16px 18px;border:0;border-radius:16px;
+  background:#fff;box-shadow:0 4px 14px rgba(62,0,117,.10);font:inherit;font-size:19px;font-weight:700;line-height:1.25;
+  color:var(--deep);text-align:right;cursor:pointer;transition:transform .12s ease,box-shadow .15s ease}
+.opt:active{transform:scale(.98)}
+.opt .pin{flex:none;width:20px;height:20px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.9) 0 13%,rgba(255,255,255,0) 15%),var(--purple);
+  box-shadow:0 2px 4px rgba(30,11,58,.3)}
+.opt .t{flex:1}
+.opt .ok{flex:none;width:30px;height:30px;border-radius:50%;background:var(--purple);color:#fff;display:none;place-items:center;font-size:17px}
+.opt.chosen{box-shadow:0 0 0 3px var(--purple),0 8px 20px rgba(62,0,117,.18)}
+.opt.chosen .ok{display:grid}
+.nw{white-space:nowrap}
+.status{margin:18px 0 0;min-height:26px;font-size:16px;color:var(--muted);text-align:center}
+.status.good{color:#0A7A4B;font-weight:700}
+.panel{margin-top:22px;background:#fff;border-radius:18px;padding:22px 18px;text-align:center;box-shadow:0 4px 14px rgba(62,0,117,.08)}
+.panel b{display:block;font-size:20px;margin-bottom:6px}
+.panel span{color:var(--muted)}
+.flash{animation:flash .9s ease}
+@keyframes flash{0%{background:#fff7c2}100%{background:#fff}}
+@media (prefers-reduced-motion:reduce){.timer .tb i,.opt{transition:none}.flash{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="logo.png" alt="Think Outside The Loop · Gong/Loop · Band">
+  <span class="eyebrow">BUILDING AI AGENTS FOR PRODUCTION</span>
+  <h1>על מה נדבר עכשיו?</h1>
+  <p class="sub">בחרו את הנושא שהכי מעניין אתכם. כל הצבעה נמשכת כמה שניות, והנושא שיקבל הכי הרבה קולות עולה לבמה.</p>
+  <div id="app"></div>
+  <p id="status" class="status" aria-live="polite"></p>
+</main>
+<script src="config.js"></script>
+<script>
+const CATS = [{"id": 0, "html": "סיפור מהשטח <span class=\"nw\">(war story)</span>"}, {"id": 1, "html": "המודל אשם?"}, {"id": 2, "html": "מי מתעורר בשלוש בלילה? 😂"}, {"id": 3, "html": "שדרוג והחלפת מודלים"}, {"id": 4, "html": "איך מתמודדים עם backward compatibility?"}, {"id": 5, "html": "עלויות לאורך זמן"}];
+const cfg = window.PANEL_VOTE_CONFIG || {};
+const ready = cfg.supabaseUrl && cfg.supabaseKey && !/YOUR-/.test(cfg.supabaseUrl + cfg.supabaseKey);
+const app = document.getElementById('app'), statusEl = document.getElementById('status');
+let device = null;
+try { device = localStorage.getItem('panel-device'); } catch (e) {}
+if (!device) {
+  device = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  try { localStorage.setItem('panel-device', device); } catch (e) {}
+}
+const mine = {}, seen = {};
+const myVote = r => { if (r in mine) return mine[r]; try { const v = localStorage.getItem('panel-vote-' + r); return v === null ? null : +v; } catch (e) { return null; } };
+const setMyVote = (r, c) => { mine[r] = c; try { localStorage.setItem('panel-vote-' + r, String(c)); } catch (e) {} };
+let st = null, lastRound = null, sending = false, endsAt = null, shown = null;
+function status(t, good) { statusEl.textContent = t; statusEl.className = 'status' + (good ? ' good' : ''); }
+async function rpc(fn, body) {
+  const h = {'Content-Type': 'application/json', apikey: cfg.supabaseKey};
+  if (!String(cfg.supabaseKey).startsWith('sb_')) h.Authorization = 'Bearer ' + cfg.supabaseKey;
+  const r = await fetch(String(cfg.supabaseUrl).replace(/\/+$/, '') + '/rest/v1/rpc/' + fn, {method: 'POST', headers: h, body: JSON.stringify(body || {})});
+  if (!r.ok) throw new Error('http ' + r.status);
+  return r.json();
+}
+const isOpen = () => !!(st && st.open && st.options && st.options.length && (endsAt === null || Date.now() < endsAt));
+function render() {
+  shown = isOpen();
+  if (!shown) {
+    app.innerHTML = st && seen[st.round]
+      ? '<div class="panel"><b>ההצבעה נסגרה</b><span>תודה! כשתיפתח הצבעה חדשה, הנושאים יופיעו כאן.</span></div>'
+      : '<div class="panel"><b>ההצבעה סגורה כרגע</b><span>כשהיא תיפתח, הנושאים יופיעו כאן. השאירו את הדף פתוח.</span></div>';
+    status('');
+    return;
+  }
+  seen[st.round] = true;
+  const chosen = myVote(st.round);
+  app.innerHTML = (endsAt ? '<div class="timer" id="timer"><span class="tt"></span><span class="tb"><i></i></span></div>' : '') +
+    '<div class="opts">' + CATS.filter(c => st.options.includes(c.id)).map(c =>
+    `<button class="opt${chosen === c.id ? ' chosen' : ''}" data-id="${c.id}" type="button"><span class="pin"></span><span class="t">${c.html}</span><span class="ok">✓</span></button>`
+  ).join('') + '</div>';
+  app.querySelectorAll('.opt').forEach(b => { b.onclick = () => vote(+b.dataset.id); });
+  drawTimer();
+  if (chosen !== null && st.options.includes(chosen)) status('✓ ההצבעה נקלטה. אפשר להחליף עד שהזמן נגמר', true);
+  else status(lastRound !== null && lastRound !== st.round ? 'הצבעה חדשה נפתחה, בחרו את הנושא הבא' : 'לחצו על נושא כדי להצביע');
+}
+function drawTimer() {
+  const el = document.getElementById('timer');
+  if (!el || !endsAt) return;
+  const left = Math.max(0, endsAt - Date.now()), sec = Math.ceil(left / 1000), total = (st && st.seconds) || 20;
+  el.querySelector('.tt').innerHTML = sec === 1 ? 'נותרה <b>שנייה</b> אחת' : `נותרו <b>${sec}</b> שניות להצבעה`;
+  el.querySelector('i').style.width = Math.max(0, Math.min(100, left / (total * 10))) + '%';
+  el.classList.toggle('urgent', sec <= 5);
+}
+setInterval(() => { if (!st) return; if (shown !== isOpen()) render(); else drawTimer(); }, 250);
+async function vote(id) {
+  if (sending || !isOpen()) return;
+  sending = true;
+  const round = st.round, prev = myVote(round);
+  setMyVote(round, id); render();
+  try {
+    const r = await rpc('panel_vote', {p_device: device, p_choice: id});
+    if (!r || !r.ok) {
+      if (prev === null) { delete mine[round]; try { localStorage.removeItem('panel-vote-' + round); } catch (e) {} } else setMyVote(round, prev);
+      await refresh(true);
+    }
+  } catch (e) { status('אין חיבור, נסו שוב בעוד רגע'); }
+  sending = false;
+}
+async function refresh(force) {
+  try {
+    const s = await rpc('panel_get_state');
+    const changed = force === true || !st || s.round !== st.round || s.open !== st.open || String(s.options) !== String(st.options);
+    if (st && s.round !== st.round) lastRound = st.round;
+    const est = s.open && typeof s.remaining === 'number' ? Date.now() + s.remaining * 1000 : null;
+    if (est === null) endsAt = null;
+    else if (endsAt === null || changed || Math.abs(est - endsAt) > 1500) endsAt = est;
+    st = s;
+    if (changed || shown !== isOpen()) { render(); if (lastRound !== null && isOpen()) app.querySelector('.opts')?.classList.add('flash'); }
+  } catch (e) { if (!st) app.innerHTML = ''; status('מתחבר להצבעה…'); }
+}
+let timer;
+function loop() { clearTimeout(timer); if (document.visibilityState === 'visible') refresh(); timer = setTimeout(loop, 2200 + Math.random() * 700); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loop(); });
+if (!ready) { app.innerHTML = '<div class="panel"><b>הדף עוד לא מחובר</b><span>צריך למלא את config.js לפי ההוראות.</span></div>'; }
+else loop();
+</script>
+</body>
+</html>
