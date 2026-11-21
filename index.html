@@ -3,65 +3,103 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#EEF4FE">
+<meta name="color-scheme" content="only light">
+<meta name="theme-color" content="#ffffff">
 <title>על מה נדבר עכשיו? · Building AI Agents for Production</title>
 <style>
-:root{--purple:#8039DF;--deep:#3E0075;--lav:#EEF4FE;--mint:#4CFEC8;--muted:#6B6680;--hot:#FF2370}
+:root{color-scheme:only light;--purple:#8039DF;--deep:#3E0075;--lav:#F4F0FD;--line:#ECE6FA;--mint:#4CFEC8;--muted:#6B6680;--hot:#FF2370;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Hebrew","Arial Hebrew",Arial,sans-serif;
+  --pinhl:radial-gradient(circle at 34% 30%,rgba(255,255,255,.9) 0 13%,rgba(255,255,255,0) 15%)}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;min-height:100vh;background:var(--lav);color:var(--deep);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,"Arial Hebrew",sans-serif;-webkit-tap-highlight-color:transparent}
-main{max-width:560px;margin:0 auto;padding:22px 16px 40px}
-.logo{display:block;width:100%;max-width:440px;margin:0 auto 20px}
-.eyebrow{display:inline-block;background:var(--mint);color:var(--deep);font-size:12px;font-weight:700;letter-spacing:.16em;
-  padding:5px 12px;border-radius:20px;direction:ltr}
-h1{font-size:28px;line-height:1.15;margin:12px 0 4px}
-.sub{margin:0;color:var(--muted);font-size:16px}
-.timer{margin-top:18px;background:#fff;border-radius:16px;padding:12px 16px 14px;box-shadow:0 4px 14px rgba(62,0,117,.08)}
-.timer .tt{display:block;text-align:center;font-size:17px;font-weight:700;margin-bottom:9px}
-.timer .tt b{font-size:23px}
-.timer .tb{display:block;height:8px;border-radius:4px;background:#EEE8F8;overflow:hidden}
-.timer .tb i{display:block;height:100%;width:100%;background:var(--purple);border-radius:4px;transition:width .25s linear,background .3s}
-.timer.urgent .tt{color:#D3105A}
-.timer.urgent .tb i{background:var(--hot)}
-.opts{display:grid;gap:12px;margin-top:16px}
-.opt{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:68px;padding:16px 18px;border:0;border-radius:16px;
-  background:#fff;box-shadow:0 4px 14px rgba(62,0,117,.10);font:inherit;font-size:19px;font-weight:700;line-height:1.25;
-  color:var(--deep);text-align:right;cursor:pointer;transition:transform .12s ease,box-shadow .15s ease}
-.opt:active{transform:scale(.98)}
-.opt .pin{flex:none;width:20px;height:20px;border-radius:50%;
-  background:radial-gradient(circle at 34% 30%,rgba(255,255,255,.9) 0 13%,rgba(255,255,255,0) 15%),var(--purple);
-  box-shadow:0 2px 4px rgba(30,11,58,.3)}
-.opt .t{flex:1}
-.opt .ok{flex:none;width:30px;height:30px;border-radius:50%;background:var(--purple);color:#fff;display:none;place-items:center;font-size:17px}
-.opt.chosen{box-shadow:0 0 0 3px var(--purple),0 8px 20px rgba(62,0,117,.18)}
-.opt.chosen .ok{display:grid}
+html{-webkit-text-size-adjust:100%;background:#fff}
+body{margin:0;min-height:100vh;background:#fff;color:var(--deep);font-family:var(--font);-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+main{position:relative;max-width:520px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+main.voting{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+header{text-align:center}
+.logo{display:block;width:80%;max-width:330px;height:auto;margin:12px auto 20px}
+.pill{display:inline-block;background:var(--mint);color:var(--deep);font-size:11px;font-weight:800;letter-spacing:.16em;padding:6px 13px 5px;
+  border-radius:20px;direction:ltr}
+h1{margin:14px 0 0;font-size:30px;line-height:1.12;font-weight:800;letter-spacing:-.01em}
+.sub{margin:6px 0 0;min-height:22px;color:var(--muted);font-size:15.5px}
+.sub.new{color:var(--purple);font-weight:700}
+.timer{position:sticky;top:0;z-index:5;margin:12px -16px 4px;padding:10px 16px 12px;background:rgba(255,255,255,.94);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.timer .row{display:flex;align-items:baseline;justify-content:center;gap:7px;font-size:16px;font-weight:700}
+.timer .num{font-size:30px;line-height:1;font-weight:800;color:var(--purple);min-width:1.3em;text-align:center;font-variant-numeric:tabular-nums}
+.timer .bar{height:8px;margin-top:8px;border-radius:4px;background:#EEE8F8;overflow:hidden}
+.timer .bar i{display:block;height:100%;width:100%;border-radius:4px;background:linear-gradient(90deg,var(--mint),var(--purple));
+  transition:width .25s linear}
+.timer.urgent .num{color:var(--hot);animation:beat 1s ease-in-out infinite}
+.timer.urgent .bar i{background:var(--hot)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;margin-top:10px;padding:4px 2px}
+.tile{position:relative;display:flex;align-items:center;justify-content:center;min-height:112px;margin:0;padding:30px 12px 16px;
+  border:1.5px solid var(--line);border-radius:18px;background:#fff;color:var(--deep);font:inherit;font-size:15.5px;font-weight:700;
+  line-height:1.25;text-align:center;text-wrap:balance;cursor:pointer;transform:rotate(var(--r,0deg));
+  box-shadow:0 6px 16px rgba(62,0,117,.08);-webkit-appearance:none;appearance:none;
+  transition:transform .18s ease,box-shadow .2s ease,background .2s ease,color .2s ease,opacity .2s ease}
+.tile:last-child:nth-child(odd){grid-column:1 / -1;justify-self:center;width:calc(50% - 6px)}
+.tile .pin{position:absolute;left:50%;top:10px;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  background:var(--pinhl),var(--purple);box-shadow:0 2px 4px rgba(30,11,58,.3)}
+.tile .ok{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:50%;background:var(--mint);color:var(--deep);
+  font-size:15px;font-weight:900;display:none;place-items:center;box-shadow:0 2px 6px rgba(10,122,75,.3)}
+.tile:active{transform:rotate(var(--r,0deg)) scale(.96)}
+.grid.has-choice .tile{opacity:.7}
+.grid .tile.chosen{opacity:1;background:linear-gradient(160deg,#9150EC,#6A26D4);color:#fff;border-color:transparent;
+  transform:rotate(0deg) scale(1.03);box-shadow:0 12px 26px rgba(106,38,212,.35)}
+.tile.chosen .pin{background:var(--pinhl),var(--mint)}
+.tile.chosen .ok{display:grid;animation:okpop .45s cubic-bezier(.3,1.7,.5,1)}
+.grid.enter .tile{animation:pop .5s cubic-bezier(.3,1.4,.5,1) backwards;animation-delay:calc(var(--i,0) * 45ms)}
 .nw{white-space:nowrap}
-.status{margin:18px 0 0;min-height:26px;font-size:16px;color:var(--muted);text-align:center}
-.status.good{color:#0A7A4B;font-weight:700}
-.panel{margin-top:22px;background:#fff;border-radius:18px;padding:22px 18px;text-align:center;box-shadow:0 4px 14px rgba(62,0,117,.08)}
-.panel b{display:block;font-size:20px;margin-bottom:6px}
-.panel span{color:var(--muted)}
-.flash{animation:flash .9s ease}
-@keyframes flash{0%{background:#fff7c2}100%{background:#fff}}
-@media (prefers-reduced-motion:reduce){.timer .tb i,.opt{transition:none}.flash{animation:none}}
+.chip{position:fixed;left:14px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:6;max-width:492px;margin:0 auto;
+  display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:18px;background:var(--deep);color:#fff;
+  box-shadow:0 12px 30px rgba(30,11,58,.35);transform:translateY(170%);transition:transform .4s cubic-bezier(.3,1.4,.5,1)}
+.chip.show{transform:none}
+.chip .ck{flex:none;width:30px;height:30px;border-radius:50%;background:var(--mint);color:var(--deep);display:grid;place-items:center;
+  font-weight:900}
+.chip .tx{flex:1;min-width:0;font-size:15px;line-height:1.3}
+.chip .tx b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .tx small{display:block;color:#CFC3EE;font-size:12.5px}
+.wait{position:relative;margin:30px 6px 0;padding:46px 22px 30px;border-radius:26px;background:#fff;border:1.5px solid var(--line);
+  text-align:center;box-shadow:0 14px 34px rgba(62,0,117,.10);transform:rotate(-1deg);animation:drop .55s cubic-bezier(.3,1.4,.5,1) backwards}
+.wait .pin{position:absolute;left:50%;top:14px;width:24px;height:24px;margin-left:-12px;border-radius:50%;
+  background:var(--pinhl),var(--purple);box-shadow:0 3px 5px rgba(30,11,58,.3)}
+.wait .ico{width:92px;height:92px;margin:4px auto 18px;border-radius:50%;background:var(--lav);display:grid;place-items:center;font-size:46px}
+.wait.done .ico{background:var(--mint);color:var(--deep);font-size:44px;font-weight:900}
+.wait .ttl{display:block;font-size:31px;line-height:1.15;font-weight:800;text-wrap:balance}
+.wait .msg{margin:10px 0 0;color:var(--muted);font-size:16px;line-height:1.45}
+.wait .live{display:inline-flex;align-items:center;gap:8px;margin-top:20px;padding:8px 15px;border-radius:20px;background:#EAFFF6;
+  color:#0A7A4B;font-style:normal;font-weight:700;font-size:14px}
+.wait .live i{width:9px;height:9px;border-radius:50%;background:#14B86A;animation:live 1.6s ease-in-out infinite}
+.status{margin:16px 0 0;min-height:22px;text-align:center;color:var(--muted);font-size:15px}
+@keyframes pop{from{opacity:0;transform:translateY(16px) rotate(var(--r,0deg)) scale(.92)}to{opacity:1;transform:rotate(var(--r,0deg))}}
+@keyframes okpop{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@keyframes live{0%,100%{box-shadow:0 0 0 3px rgba(20,184,106,.22)}50%{box-shadow:0 0 0 7px rgba(20,184,106,.05)}}
+@keyframes drop{from{opacity:0;transform:translateY(-12px) rotate(-3deg)}to{opacity:1;transform:rotate(-1deg)}}
+@media (prefers-reduced-motion:reduce){.tile,.chip,.timer .bar i{transition:none}
+  .grid.enter .tile,.wait,.tile.chosen .ok,.timer.urgent .num,.wait .live i{animation:none}}
 </style>
 </head>
 <body>
 <main>
-  <img class="logo" src="logo.png" alt="Think Outside The Loop · Gong/Loop · Band">
-  <span class="eyebrow">BUILDING AI AGENTS FOR PRODUCTION</span>
-  <h1>על מה נדבר עכשיו?</h1>
-  <p class="sub">בחרו את הנושא שהכי מעניין אתכם. כל הצבעה נמשכת כמה שניות, והנושא שיקבל הכי הרבה קולות עולה לבמה.</p>
+  <header>
+    <img class="logo" src="logo.png" alt="Think Outside The Loop · Gong/Loop · Band" width="1209" height="216">
+    <span class="pill">BUILDING AI AGENTS FOR PRODUCTION</span>
+    <h1>על מה נדבר עכשיו?</h1>
+    <p class="sub" id="sub"></p>
+  </header>
   <div id="app"></div>
   <p id="status" class="status" aria-live="polite"></p>
 </main>
+<div class="chip" id="chip" aria-live="polite"><span class="ck">✓</span><span class="tx"><b id="chipTopic"></b><small>הקול שלך נקלט · אפשר להחליף עד שהזמן נגמר</small></span></div>
 <script src="config.js"></script>
 <script>
-const CATS = [{"id": 0, "html": "סיפור מהשטח <span class=\"nw\">(war story)</span>"}, {"id": 1, "html": "המודל אשם?"}, {"id": 2, "html": "מי מתעורר בשלוש בלילה? 😂"}, {"id": 3, "html": "שדרוג והחלפת מודלים"}, {"id": 4, "html": "איך מתמודדים עם backward compatibility?"}, {"id": 5, "html": "עלויות לאורך זמן"}];
+const CATS = [{"id": 0, "html": "מה שונה בניטור agent?", "text": "מה שונה בניטור agent?"}, {"id": 1, "html": "סיפור מהשטח <span class=\"nw\">(war story)</span>", "text": "סיפור מהשטח (war story)"}, {"id": 2, "html": "המודל אשם?", "text": "המודל אשם?"}, {"id": 3, "html": "מי מתעורר בשלוש בלילה? 😂", "text": "מי מתעורר בשלוש בלילה? 😂"}, {"id": 4, "html": "שדרוג והחלפת מודלים", "text": "שדרוג והחלפת מודלים"}, {"id": 5, "html": "איך מתמודדים עם backward compatibility?", "text": "איך מתמודדים עם backward compatibility?"}, {"id": 6, "html": "עלויות לאורך זמן", "text": "עלויות לאורך זמן"}, {"id": 7, "html": "<span class=\"nw\">ה-agent</span> השתנה לבד <span class=\"nw\">(drift)</span>", "text": "ה-agent השתנה לבד (drift)"}, {"id": 8, "html": "agents שמדברים עם agents", "text": "agents שמדברים עם agents"}, {"id": 9, "html": "ידע וזיכרון שמתיישנים", "text": "ידע וזיכרון שמתיישנים"}, {"id": 10, "html": "מה עושים עם כל הדאטה <span class=\"nw\">מ-production</span>?", "text": "מה עושים עם כל הדאטה מ-production?"}, {"id": 11, "html": "<span class=\"nw\">ה-agent</span> עדיין שווה את זה?", "text": "ה-agent עדיין שווה את זה?"}];
+const ANG = [-1.3, 0.9, 1.1, -0.8, -0.6, 1.3, 1.0, -1.1, -1.2, 0.7, 0.8, -0.9];
 const cfg = window.PANEL_VOTE_CONFIG || {};
 const ready = cfg.supabaseUrl && cfg.supabaseKey && !/YOUR-/.test(cfg.supabaseUrl + cfg.supabaseKey);
-const app = document.getElementById('app'), statusEl = document.getElementById('status');
+const main = document.querySelector('main'), app = document.getElementById('app'), statusEl = document.getElementById('status');
+const sub = document.getElementById('sub'), chip = document.getElementById('chip'), chipTopic = document.getElementById('chipTopic');
 let device = null;
 try { device = localStorage.getItem('panel-device'); } catch (e) {}
 if (!device) {
@@ -69,10 +107,11 @@ if (!device) {
   try { localStorage.setItem('panel-device', device); } catch (e) {}
 }
 const mine = {}, seen = {};
-const myVote = r => { if (r in mine) return mine[r]; try { const v = localStorage.getItem('panel-vote-' + r); return v === null ? null : +v; } catch (e) { return null; } };
-const setMyVote = (r, c) => { mine[r] = c; try { localStorage.setItem('panel-vote-' + r, String(c)); } catch (e) {} };
-let st = null, lastRound = null, sending = false, endsAt = null, shown = null;
-function status(t, good) { statusEl.textContent = t; statusEl.className = 'status' + (good ? ' good' : ''); }
+function myVote(r) { if (r in mine) return mine[r]; try { const v = localStorage.getItem('panel-vote-' + r); return v === null ? null : +v; } catch (e) { return null; } }
+function setMyVote(r, c) { mine[r] = c; try { localStorage.setItem('panel-vote-' + r, String(c)); } catch (e) {} }
+function clearMyVote(r) { mine[r] = null; try { localStorage.removeItem('panel-vote-' + r); } catch (e) {} }
+let st = null, lastRound = null, sending = false, endsAt = null, shown = null, drawnRound = null;
+function status(t) { statusEl.textContent = t; }
 async function rpc(fn, body) {
   const h = {'Content-Type': 'application/json', apikey: cfg.supabaseKey};
   if (!String(cfg.supabaseKey).startsWith('sb_')) h.Authorization = 'Bearer ' + cfg.supabaseKey;
@@ -81,47 +120,65 @@ async function rpc(fn, body) {
   return r.json();
 }
 const isOpen = () => !!(st && st.open && st.options && st.options.length && (endsAt === null || Date.now() < endsAt));
+function waitCard(done) {
+  return `<div class="wait${done ? ' done' : ''}"><span class="pin"></span>` + (done
+    ? '<div class="ico">✓</div><b class="ttl">ההצבעה נסגרה</b><p class="msg">תודה! ההצבעה הבאה תיפתח בקרוב.</p><em class="live"><i></i>מחכים להצבעה הבאה</em>'
+    : '<div class="ico">🗳️</div><b class="ttl">ההצבעה עדיין לא פתוחה</b><p class="msg">השאירו את הדף פתוח. כשההצבעה תיפתח, הנושאים יופיעו כאן.</p><em class="live"><i></i>מחכים להצבעה</em>') + '</div>';
+}
 function render() {
   shown = isOpen();
+  main.classList.toggle('voting', shown);
   if (!shown) {
-    app.innerHTML = st && seen[st.round]
-      ? '<div class="panel"><b>ההצבעה נסגרה</b><span>תודה! כשתיפתח הצבעה חדשה, הנושאים יופיעו כאן.</span></div>'
-      : '<div class="panel"><b>ההצבעה סגורה כרגע</b><span>כשהיא תיפתח, הנושאים יופיעו כאן. השאירו את הדף פתוח.</span></div>';
-    status('');
+    app.innerHTML = waitCard(!!(st && seen[st.round]));
+    sub.textContent = ''; sub.className = 'sub'; chip.classList.remove('show'); drawnRound = null;
     return;
   }
   seen[st.round] = true;
-  const chosen = myVote(st.round);
-  app.innerHTML = (endsAt ? '<div class="timer" id="timer"><span class="tt"></span><span class="tb"><i></i></span></div>' : '') +
-    '<div class="opts">' + CATS.filter(c => st.options.includes(c.id)).map(c =>
-    `<button class="opt${chosen === c.id ? ' chosen' : ''}" data-id="${c.id}" type="button"><span class="pin"></span><span class="t">${c.html}</span><span class="ok">✓</span></button>`
-  ).join('') + '</div>';
-  app.querySelectorAll('.opt').forEach(b => { b.onclick = () => vote(+b.dataset.id); });
-  drawTimer();
-  if (chosen !== null && st.options.includes(chosen)) status('✓ ההצבעה נקלטה. אפשר להחליף עד שהזמן נגמר', true);
-  else status(lastRound !== null && lastRound !== st.round ? 'הצבעה חדשה נפתחה, בחרו את הנושא הבא' : 'לחצו על נושא כדי להצביע');
+  const fresh = drawnRound !== st.round, isNew = lastRound !== null && lastRound !== st.round;
+  drawnRound = st.round;
+  const opts = CATS.filter(c => st.options.includes(c.id));
+  app.innerHTML = (endsAt ? '<div class="timer" id="timer"><div class="row"><span class="lead"></span><b class="num"></b><span class="unit"></span></div><div class="bar"><i></i></div></div>' : '') +
+    `<div class="grid${fresh ? ' enter' : ''}">` + opts.map((c, k) =>
+      `<button class="tile" data-id="${c.id}" type="button" style="--r:${ANG[c.id % ANG.length]}deg;--i:${k}"><span class="pin"></span><span class="ok">✓</span><span class="t">${c.html}</span></button>`
+    ).join('') + '</div>';
+  app.querySelectorAll('.tile').forEach(b => { b.onclick = () => vote(+b.dataset.id); });
+  sub.textContent = isNew ? 'הצבעה חדשה! בחרו את הנושא הבא' : 'בחרו את הנושא שהכי מעניין אתכם';
+  sub.className = 'sub' + (isNew ? ' new' : '');
+  markChoice(myVote(st.round)); drawTimer();
+}
+function markChoice(id) {
+  const grid = app.querySelector('.grid');
+  const valid = id !== null && st && st.options.includes(id);
+  if (grid) {
+    grid.classList.toggle('has-choice', valid);
+    grid.querySelectorAll('.tile').forEach(t => t.classList.toggle('chosen', valid && +t.dataset.id === id));
+  }
+  const c = valid && CATS.find(x => x.id === id);
+  if (c) { chipTopic.textContent = 'הצבעת: ' + c.text; chip.classList.add('show'); } else chip.classList.remove('show');
 }
 function drawTimer() {
   const el = document.getElementById('timer');
   if (!el || !endsAt) return;
   const left = Math.max(0, endsAt - Date.now()), sec = Math.ceil(left / 1000), total = (st && st.seconds) || 20;
-  el.querySelector('.tt').innerHTML = sec === 1 ? 'נותרה <b>שנייה</b> אחת' : `נותרו <b>${sec}</b> שניות להצבעה`;
-  el.querySelector('i').style.width = Math.max(0, Math.min(100, left / (total * 10))) + '%';
+  el.querySelector('.lead').textContent = sec === 1 ? 'נותרה' : 'נותרו';
+  el.querySelector('.num').textContent = String(sec);
+  el.querySelector('.unit').textContent = sec === 1 ? 'שנייה להצבעה' : 'שניות להצבעה';
+  el.querySelector('.bar i').style.width = Math.max(0, Math.min(100, left / (total * 10))) + '%';
   el.classList.toggle('urgent', sec <= 5);
 }
 setInterval(() => { if (!st) return; if (shown !== isOpen()) render(); else drawTimer(); }, 250);
 async function vote(id) {
   if (sending || !isOpen()) return;
-  sending = true;
   const round = st.round, prev = myVote(round);
-  setMyVote(round, id); render();
+  if (prev === id) return;
+  sending = true;
+  setMyVote(round, id); markChoice(id); status('');
+  try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
+  const undo = () => { if (prev === null) clearMyVote(round); else setMyVote(round, prev); };
   try {
     const r = await rpc('panel_vote', {p_device: device, p_choice: id});
-    if (!r || !r.ok) {
-      if (prev === null) { delete mine[round]; try { localStorage.removeItem('panel-vote-' + round); } catch (e) {} } else setMyVote(round, prev);
-      await refresh(true);
-    }
-  } catch (e) { status('אין חיבור, נסו שוב בעוד רגע'); }
+    if (!r || !r.ok) { undo(); await refresh(true); }
+  } catch (e) { undo(); if (st && st.round === round) markChoice(prev); status('אין חיבור, נסו שוב בעוד רגע'); }
   sending = false;
 }
 async function refresh(force) {
@@ -133,13 +190,14 @@ async function refresh(force) {
     if (est === null) endsAt = null;
     else if (endsAt === null || changed || Math.abs(est - endsAt) > 1500) endsAt = est;
     st = s;
-    if (changed || shown !== isOpen()) { render(); if (lastRound !== null && isOpen()) app.querySelector('.opts')?.classList.add('flash'); }
+    if (statusEl.textContent === 'מתחבר להצבעה…') status('');
+    if (changed || shown !== isOpen()) render();
   } catch (e) { if (!st) app.innerHTML = ''; status('מתחבר להצבעה…'); }
 }
 let timer;
 function loop() { clearTimeout(timer); if (document.visibilityState === 'visible') refresh(); timer = setTimeout(loop, 2200 + Math.random() * 700); }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loop(); });
-if (!ready) { app.innerHTML = '<div class="panel"><b>הדף עוד לא מחובר</b><span>צריך למלא את config.js לפי ההוראות.</span></div>'; }
+if (!ready) app.innerHTML = '<div class="wait"><span class="pin"></span><b class="ttl">הדף עוד לא מחובר</b><p class="msg">צריך למלא את config.js לפי ההוראות.</p></div>';
 else loop();
 </script>
 </body>
